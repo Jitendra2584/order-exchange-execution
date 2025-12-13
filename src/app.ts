@@ -43,9 +43,7 @@ export async function buildApp() {
       endpoints: {
         health: "GET /health",
         createOrder: "POST /api/orders/execute",
-        orderStatus: "WS /api/orders/status/:orderId",
-        getOrder: "GET /api/orders/:orderId",
-        listOrders: "GET /api/orders"
+        orderStatus: "WS /api/orders/status/:orderId"
       }
     };
   });
