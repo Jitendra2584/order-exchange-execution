@@ -1,5 +1,4 @@
 import Fastify from "fastify";
-import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
 import dotenv from "dotenv";
 import { AppDataSource } from "./data-source";
@@ -25,10 +24,7 @@ export async function buildApp() {
     }
   });
 
-  // Register CORS - Allow all origins
-  await app.register(cors, {
-    origin: "*"
-  });
+
 
   // Register WebSocket support
   await app.register(websocket);
