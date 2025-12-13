@@ -4,8 +4,12 @@ import dotenv from "dotenv";
 import { AppDataSource } from "./data-source";
 import { orderRoutes } from "./routes/orders";
 import { redisClient } from "./services/RedisClient";
+import cors from "@fastify/cors";
+import path from 'path';
+import fastifyStatic from "@fastify/static";
 
 dotenv.config();
+
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const HOST = process.env.HOST || "127.0.0.1";
@@ -28,6 +32,13 @@ export async function buildApp() {
 
   // Register WebSocket support
   await app.register(websocket);
+
+// Serve static files
+await app.register(fastifyStatic, {
+  root: path.join(__dirname, 'public'),
+  prefix: '/', 
+});
+
 
   // Health check endpoint
   app.get("/", async (request, reply) => {
