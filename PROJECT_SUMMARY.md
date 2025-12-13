@@ -1,5 +1,94 @@
 # Project Summary - Order Execution Engine
 
+---
+
+## 🚀 **QUICK START - TEST THE ENGINE IN 30 SECONDS!** 🚀
+
+> **No setup required!** Just open the WebSocket client in your browser and start testing.
+
+### Step 1: Open the WebSocket Client
+
+1. Open **Chrome browser**
+2. Open this file: **[examples/websocket-client.html](examples/websocket-client.html)**
+   - Or drag the file into Chrome
+3. Open **Chrome DevTools** (F12 or Cmd+Option+I)
+4. Go to **Console** tab
+
+### Step 2: Submit Test Orders
+
+#### **Test Case 1: Basic SOL to USDC Order**
+
+**Input** (in the HTML form):
+- **Token In:** `SOL`
+- **Token Out:** `USDC`
+- **Amount In:** `1.5`
+- **Slippage:** `1` (means 1%)
+- Click **"Execute Order"**
+
+**Expected Output** (in the UI):
+```
+1. Order created: <orderId>
+2. ● Connected
+3. [Status] PENDING - Order received and queued
+4. [Status] ROUTING - Comparing DEX prices
+   - DEX Quotes shown with prices
+   - Selected DEX (RAYDIUM or METEORA)
+5. [Status] BUILDING - Creating transaction
+6. [Status] SUBMITTED - Transaction sent to network
+7. [Status] CONFIRMED - Transaction confirmed successfully
+   - TX Hash: mock-tx-xxxxx
+   - Execution Price: ~95.xx
+```
+
+**Expected in Chrome DevTools Console:**
+```
+WebSocket connected
+Status update: {orderId: "...", status: "PENDING", ...}
+Status update: {orderId: "...", status: "ROUTING", quotes: [...]}
+Status update: {orderId: "...", status: "CONFIRMED", txHash: "..."}
+```
+
+**Expected in Terminal** (`pnpm dev`):
+```
+[API] Created order <uuid>: 1.5 SOL -> USDC
+[WebSocket] Client connected for order <uuid>
+[Queue] Added order <uuid> to queue
+[Raydium] Quote for 1.5 SOL -> USDC: Price=95.2, Output=142.5
+[Meteora] Quote for 1.5 SOL -> USDC: Price=95.8, Output=143.1
+[DEX Router] Selected METEORA with output 143.1
+[METEORA] Swap executed: 1.5 SOL -> 143.1 USDC
+[METEORA] TX Hash: mock-tx-xxxxx
+✅ Order <uuid> completed successfully
+```
+
+### Step 3: Test Multiple Concurrent Orders
+
+1. Click **"Execute Order"** 5 times quickly (without waiting)
+2. Watch all 5 orders process concurrently
+3. Each should show all status updates in real-time
+
+**Expected:** All 5 orders complete successfully within ~3-5 seconds total
+
+### Step 4: Test Different Token Pairs
+
+#### **Test Case 2: USDC to SOL**
+- **Token In:** `USDC`
+- **Token Out:** `SOL`
+- **Amount In:** `100`
+- **Slippage:** `1.5`
+
+**Expected:** Similar flow but with different prices (~0.01 SOL per USDC)
+
+#### **Test Case 3: High Slippage**
+- **Token In:** `SOL`
+- **Token Out:** `USDC`
+- **Amount In:** `10`
+- **Slippage:** `5` (5% slippage)
+
+**Expected:** Order completes with higher slippage tolerance
+
+---
+
 ## 🎉 What We Built
 
 A complete, production-ready **Order Execution Engine** for cryptocurrency trading with the following features:
