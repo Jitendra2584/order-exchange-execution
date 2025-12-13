@@ -25,10 +25,9 @@ export async function buildApp() {
     }
   });
 
-  // Register CORS
+  // Register CORS - Allow all origins
   await app.register(cors, {
-    origin: true,
-    credentials: true
+    origin: "*"
   });
 
   // Register WebSocket support
