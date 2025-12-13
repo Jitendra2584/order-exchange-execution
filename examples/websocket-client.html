@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Execution Engine - WebSocket Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .status-panel {
+            margin-top: 30px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .status-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .status-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .status-item.pending {
+            border-left-color: #ffa726;
+        }
+
+        .status-item.routing {
+            border-left-color: #29b6f6;
+        }
+
+        .status-item.building {
+            border-left-color: #ab47bc;
+        }
+
+        .status-item.submitted {
+            border-left-color: #5c6bc0;
+        }
+
+        .status-item.confirmed {
+            border-left-color: #66bb6a;
+        }
+
+        .status-item.failed {
+            border-left-color: #ef5350;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .status-message {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .status-details {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-right: 8px;
+        }
+
+        .badge.pending {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .badge.routing {
+            background: #e1f5fe;
+            color: #0277bd;
+        }
+
+        .badge.building {
+            background: #f3e5f5;
+            color: #6a1b9a;
+        }
+
+        .badge.submitted {
+            background: #e8eaf6;
+            color: #283593;
+        }
+
+        .badge.confirmed {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge.failed {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .connection-status {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .connection-status.connected {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .connection-status.disconnected {
+            background: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Order Execution Engine</h1>
+            <p class="subtitle">Real-time Market Order Execution with DEX Routing</p>
+        </header>
+
+        <div class="content">
+            <div class="form-group">
+                <label>API URL</label>
+                <input type="text" id="apiUrl" value="http://localhost:3000" placeholder="http://localhost:3000">
+            </div>
+
+            <div class="form-group">
+                <label>Token In</label>
+                <select id="tokenIn">
+                    <option value="SOL">SOL</option>
+                    <option value="USDC">USDC</option>
+                    <option value="USDT">USDT</option>
+                    <option value="RAY">RAY</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Token Out</label>
+                <select id="tokenOut">
+                    <option value="USDC">USDC</option>
+                    <option value="SOL">SOL</option>
+                    <option value="USDT">USDT</option>
+                    <option value="RAY">RAY</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Amount In</label>
+                <input type="number" id="amountIn" value="1.5" step="0.01" min="0.01" placeholder="1.5">
+            </div>
+
+            <div class="form-group">
+                <label>Slippage (%)</label>
+                <input type="number" id="slippage" value="1" step="0.1" min="0.1" max="100" placeholder="1">
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="createOrder()">Execute Order</button>
+                <button class="btn-secondary" onclick="clearUpdates()">Clear Updates</button>
+            </div>
+
+            <div class="status-panel">
+                <div class="status-header">Order Status Updates</div>
+                <div id="connectionStatus"></div>
+                <div id="statusUpdates"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Support multiple concurrent WebSocket connections
+        const activeConnections = new Map();
+        let totalOrders = 0;
+
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('connectionStatus');
+            const activeCount = activeConnections.size;
+            const isConnected = activeCount > 0;
+
+            statusEl.innerHTML = `
+                <div class="connection-status ${isConnected ? 'connected' : 'disconnected'}">
+                    ${isConnected ? `● ${activeCount} Active Connection${activeCount > 1 ? 's' : ''}` : '○ No Active Connections'}
+                </div>
+                <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                    Total Orders: ${totalOrders}
+                </div>
+            `;
+        }
+
+        async function createOrder() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const tokenIn = document.getElementById('tokenIn').value;
+            const tokenOut = document.getElementById('tokenOut').value;
+            const amountIn = parseFloat(document.getElementById('amountIn').value);
+            const slippage = parseFloat(document.getElementById('slippage').value) / 100; // Convert to decimal
+
+            try {
+                const response = await fetch(`${apiUrl}/api/orders/execute`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tokenIn,
+                        tokenOut,
+                        amountIn,
+                        slippage
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    totalOrders++;
+                    const orderId = data.orderId;
+                    const shortId = orderId.substring(0, 8);
+                    addStatusUpdate('info', `Order #${totalOrders} created: ${shortId}...`, data.orderDetails, orderId);
+                    connectWebSocket(apiUrl, orderId);
+                } else {
+                    addStatusUpdate('error', 'Failed to create order', data);
+                }
+            } catch (error) {
+                addStatusUpdate('error', 'Network error', { message: error.message });
+            }
+        }
+
+        function connectWebSocket(apiUrl, orderId) {
+            // Don't close existing connections - support multiple concurrent orders!
+            const wsUrl = apiUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+            const ws = new WebSocket(`${wsUrl}/api/orders/status/${orderId}`);
+
+            ws.onopen = () => {
+                activeConnections.set(orderId, ws);
+                updateConnectionStatus();
+                console.log(`WebSocket connected for order ${orderId}`);
+            };
+
+            ws.onmessage = (event) => {
+                const update = JSON.parse(event.data);
+                console.log('Status update:', update);
+
+                if (update.error) {
+                    addStatusUpdate('failed', update.error, update, orderId);
+                } else {
+                    addStatusUpdate(update.status.toLowerCase(), update.message, update, orderId);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error(`WebSocket error for order ${orderId}:`, error);
+                addStatusUpdate('error', 'WebSocket error', { message: 'Connection error occurred' }, orderId);
+            };
+
+            ws.onclose = () => {
+                activeConnections.delete(orderId);
+                updateConnectionStatus();
+                console.log(`WebSocket disconnected for order ${orderId}`);
+            };
+        }
+
+        function addStatusUpdate(status, message, details, orderId = null) {
+            const updatesEl = document.getElementById('statusUpdates');
+            const timestamp = new Date().toLocaleTimeString();
+            const shortId = orderId ? orderId.substring(0, 8) + '...' : '';
+
+            let detailsHtml = '';
+            if (details) {
+                if (details.quotes) {
+                    detailsHtml = `
+                        <div class="status-details">
+                            <strong>DEX Quotes:</strong><br>
+                            ${details.quotes.map(q => `
+                                ${q.dexName}: $${q.price.toFixed(4)} (Fee: ${(q.fee * 100).toFixed(2)}%) → ${q.estimatedOutput.toFixed(4)} output
+                            `).join('<br>')}
+                            ${details.selectedDex ? `<br><strong>Selected: ${details.selectedDex}</strong>` : ''}
+                        </div>
+                    `;
+                } else if (details.txHash) {
+                    detailsHtml = `
+                        <div class="status-details">
+                            <strong>TX Hash:</strong> ${details.txHash}<br>
+                            <strong>Execution Price:</strong> $${details.executionPrice.toFixed(4)}
+                        </div>
+                    `;
+                } else if (details.error) {
+                    detailsHtml = `
+                        <div class="status-details">
+                            <strong>Error:</strong> ${details.error}<br>
+                            ${details.retryCount ? `<strong>Retry Count:</strong> ${details.retryCount}` : ''}
+                        </div>
+                    `;
+                } else if (details.orderDetails) {
+                    detailsHtml = `
+                        <div class="status-details">
+                            ${details.orderDetails.tokenIn} → ${details.orderDetails.tokenOut}<br>
+                            Amount: ${details.orderDetails.amountIn}, Slippage: ${(details.orderDetails.slippage * 100).toFixed(2)}%
+                        </div>
+                    `;
+                }
+            }
+
+            const updateHtml = `
+                <div class="status-item ${status}">
+                    <div class="timestamp">${timestamp} ${shortId ? `[${shortId}]` : ''}</div>
+                    <div class="status-message">
+                        <span class="badge ${status}">${status}</span>
+                        ${message}
+                    </div>
+                    ${detailsHtml}
+                </div>
+            `;
+
+            updatesEl.insertAdjacentHTML('afterbegin', updateHtml);
+        }
+
+        function clearUpdates() {
+            document.getElementById('statusUpdates').innerHTML = '';
+            // Close all active WebSocket connections
+            activeConnections.forEach((ws, orderId) => {
+                ws.close();
+            });
+            activeConnections.clear();
+            totalOrders = 0;
+            updateConnectionStatus();
+        }
+
+        // Initialize
+        updateConnectionStatus();
+    </script>
+</body>
+</html>

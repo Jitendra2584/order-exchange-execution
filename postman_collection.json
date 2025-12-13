@@ -1,0 +1,179 @@
+{
+  "info": {
+    "name": "Order Execution Engine API",
+    "description": "API collection for testing the Order Execution Engine with DEX routing and WebSocket support",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        },
+        "description": "Check the health status of the API and its dependencies (database and Redis)"
+      }
+    },
+    {
+      "name": "API Info",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/",
+          "host": ["{{base_url}}"]
+        },
+        "description": "Get API information and available endpoints"
+      }
+    },
+    {
+      "name": "Create Market Order - SOL to USDC",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokenIn\": \"SOL\",\n  \"tokenOut\": \"USDC\",\n  \"amountIn\": 1.5,\n  \"slippage\": 0.01\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/orders/execute",
+          "host": ["{{base_url}}"],
+          "path": ["api", "orders", "execute"]
+        },
+        "description": "Create a market order to swap 1.5 SOL for USDC with 1% slippage. Returns orderId which can be used to connect to WebSocket for status updates."
+      }
+    },
+    {
+      "name": "Create Market Order - USDC to SOL",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokenIn\": \"USDC\",\n  \"tokenOut\": \"SOL\",\n  \"amountIn\": 100,\n  \"slippage\": 0.015\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/orders/execute",
+          "host": ["{{base_url}}"],
+          "path": ["api", "orders", "execute"]
+        },
+        "description": "Create a market order to swap 100 USDC for SOL with 1.5% slippage"
+      }
+    },
+    {
+      "name": "Create Market Order - High Volume",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokenIn\": \"SOL\",\n  \"tokenOut\": \"USDC\",\n  \"amountIn\": 50,\n  \"slippage\": 0.02\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/orders/execute",
+          "host": ["{{base_url}}"],
+          "path": ["api", "orders", "execute"]
+        },
+        "description": "Create a high volume market order with 2% slippage tolerance"
+      }
+    },
+    {
+      "name": "Get Order by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/orders/{{order_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "orders", "{{order_id}}"]
+        },
+        "description": "Retrieve details of a specific order by its ID. Replace {{order_id}} with actual order ID."
+      }
+    },
+    {
+      "name": "List All Orders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/orders",
+          "host": ["{{base_url}}"],
+          "path": ["api", "orders"]
+        },
+        "description": "List all orders with default limit of 50"
+      }
+    },
+    {
+      "name": "List Orders - Filtered by Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/orders?status=CONFIRMED",
+          "host": ["{{base_url}}"],
+          "path": ["api", "orders"],
+          "query": [
+            {
+              "key": "status",
+              "value": "CONFIRMED",
+              "description": "Filter by order status: PENDING, ROUTING, BUILDING, SUBMITTED, CONFIRMED, FAILED"
+            }
+          ]
+        },
+        "description": "List orders filtered by status"
+      }
+    },
+    {
+      "name": "List Orders - With Limit",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/orders?limit=10",
+          "host": ["{{base_url}}"],
+          "path": ["api", "orders"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10",
+              "description": "Limit number of results"
+            }
+          ]
+        },
+        "description": "List orders with custom limit"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string",
+      "description": "Set this to an actual order ID from a previous request"
+    }
+  ]
+}
