@@ -16,6 +16,7 @@ RUN pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
+
 # Build TypeScript code
 RUN pnpm run build
 
@@ -27,6 +28,8 @@ RUN corepack enable && corepack prepare pnpm@10.21.0 --activate
 
 # Set working directory
 WORKDIR /app
+
+COPY public ./public
 
 # Copy package files
 COPY package.json pnpm-lock.yaml* ./
