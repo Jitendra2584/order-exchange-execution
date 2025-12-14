@@ -302,6 +302,12 @@
     </div>
 
     <script>
+        // Architecture Note:
+        // 1. Orders are added to the processing queue IMMEDIATELY when created via POST /api/orders/execute
+        // 2. WebSocket connection is established AFTER order creation to receive real-time updates
+        // 3. Order processing begins right away, even if WebSocket hasn't connected yet
+        // 4. Multiple WebSocket clients can connect to the same order for monitoring
+
         // Support multiple concurrent WebSocket connections
         const activeConnections = new Map();
         let totalOrders = 0;

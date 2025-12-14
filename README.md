@@ -33,10 +33,8 @@ Both extensions reuse the same DEX routing, queue management, and WebSocket noti
 ### Step 1: Open the WebSocket Client
 
 1. Open **Chrome browser**
-2. Open this file: **[examples/websocket-client.html](examples/websocket-client.html)**
-   - Or drag the file into Chrome
-3. Open **Chrome DevTools** (F12 or Cmd+Option+I)
-4. Go to **Console** tab
+2. Open this link: **[demo-page](https://domestic-brittney-individual-test-123-ea51a9a8.koyeb.app/test.html)**
+
 
 ### Step 2: Submit Test Orders
 

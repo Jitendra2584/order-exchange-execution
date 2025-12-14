@@ -11,7 +11,8 @@ export async function orderRoutes(fastify: FastifyInstance) {
 
   /**
    * POST /api/orders/execute
-   * Creates an order and upgrades to WebSocket for status updates
+   * Creates an order and immediately adds it to the processing queue
+   * Returns orderId - client should then connect to WebSocket for real-time status updates
    */
   fastify.route({
     method: "POST",
@@ -35,10 +36,22 @@ export async function orderRoutes(fastify: FastifyInstance) {
 
         console.log(`[API] Created order ${order.id}: ${order.amountIn} ${order.tokenIn} -> ${order.tokenOut}`);
 
+        // Add order to processing queue IMMEDIATELY
+        try {
+          await addOrderToQueue(order.id);
+          console.log(`[Queue] Added order ${order.id} to queue`);
+        } catch (error) {
+          console.error(`[Queue] Error adding order ${order.id} to queue:`, error);
+          return reply.code(500).send({
+            error: "Failed to queue order for processing",
+            orderId: order.id
+          });
+        }
+
         // Return order ID
         return reply.code(201).send({
           orderId: order.id,
-          message: "Order created successfully. Upgrade to WebSocket for status updates.",
+          message: "Order created and queued for processing. Connect to WebSocket for real-time status updates.",
           orderDetails: {
             tokenIn: order.tokenIn,
             tokenOut: order.tokenOut,
@@ -66,8 +79,12 @@ export async function orderRoutes(fastify: FastifyInstance) {
   });
 
   /**
-   * WebSocket route for order status updates
+   * WebSocket route for real-time order status updates
    * ws://localhost:3000/api/orders/status/:orderId
+   *
+   * Note: Order processing begins immediately when created via POST /api/orders/execute
+   * WebSocket connection is optional and only used for monitoring real-time updates
+   * Multiple clients can connect to the same order for monitoring
    */
   fastify.register(async function (fastify) {
     fastify.get("/status/:orderId", { websocket: true }, async (socket: WebSocket, request: FastifyRequest) => {
@@ -87,14 +104,14 @@ export async function orderRoutes(fastify: FastifyInstance) {
         return;
       }
 
-      // Register WebSocket connection
-      wsManager.registerConnection(orderId, { socket });
+      // Register WebSocket connection and send any buffered updates
+      await wsManager.registerConnection(orderId, { socket });
 
-      // Send initial status
+      // Send initial status (after buffered updates)
       socket.send(JSON.stringify({
         orderId: order.id,
         status: order.status,
-        message: "Connected to order status updates",
+        message: "Connected to order status updates. Order is already processing.",
         orderDetails: {
           tokenIn: order.tokenIn,
           tokenOut: order.tokenOut,
@@ -103,17 +120,8 @@ export async function orderRoutes(fastify: FastifyInstance) {
         }
       }));
 
-      // Add order to processing queue
-      try {
-        await addOrderToQueue(orderId);
-      } catch (error) {
-        console.error(`[WebSocket] Error adding order ${orderId} to queue:`, error);
-        socket.send(JSON.stringify({
-          orderId,
-          status: "FAILED",
-          error: "Failed to queue order for processing"
-        }));
-      }
+      // Note: Order was already added to queue when it was created via POST /api/orders/execute
+      // WebSocket is only for monitoring real-time updates
     });
   });
 

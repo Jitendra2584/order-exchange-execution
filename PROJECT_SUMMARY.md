@@ -4,13 +4,12 @@
 
 ## 🚀 **QUICK START - TEST THE ENGINE IN 30 SECONDS!** 🚀
 
-> **No setup required!** Just open the WebSocket client in your browser and start testing.
+> **No setup required!** Just open the url in your browser and start ordering.
 
 ### Step 1: Open the WebSocket Client
 
 1. Open **Chrome browser**
-2. Open this file: **[examples/websocket-client.html](examples/websocket-client.html)**
-   - Or drag the file into Chrome
+2. Open this link: **[demo-page](https://domestic-brittney-individual-test-123-ea51a9a8.koyeb.app/test.html)**
 3. Open **Chrome DevTools** (F12 or Cmd+Option+I)
 4. Go to **Console** tab
 
@@ -51,8 +50,8 @@ Status update: {orderId: "...", status: "CONFIRMED", txHash: "..."}
 **Expected in Terminal** (`pnpm dev`):
 ```
 [API] Created order <uuid>: 1.5 SOL -> USDC
+[Queue] Added order <uuid> to queue (IMMEDIATELY)
 [WebSocket] Client connected for order <uuid>
-[Queue] Added order <uuid> to queue
 [Raydium] Quote for 1.5 SOL -> USDC: Price=95.2, Output=142.5
 [Meteora] Quote for 1.5 SOL -> USDC: Price=95.8, Output=143.1
 [DEX Router] Selected METEORA with output 143.1
@@ -60,6 +59,8 @@ Status update: {orderId: "...", status: "CONFIRMED", txHash: "..."}
 [METEORA] TX Hash: mock-tx-xxxxx
 ✅ Order <uuid> completed successfully
 ```
+
+**Note:** Order is queued immediately after creation. WebSocket connection is for monitoring only - processing starts right away!
 
 ### Step 3: Test Multiple Concurrent Orders
 
@@ -130,7 +131,7 @@ A complete, production-ready **Order Execution Engine** for cryptocurrency tradi
 - Graceful shutdown
 
 ✅ **Testing & Documentation**
-- 20+ unit and integration tests
+- 40 comprehensive unit and integration tests
 - Jest testing framework configured
 - Comprehensive README
 - Deployment guide
@@ -223,11 +224,11 @@ order-execution-engine/
    ↓
 3. Create order in database (status: PENDING)
    ↓
-4. Return orderId to client
+4. Add order to BullMQ queue immediately
    ↓
-5. Client connects to WebSocket /api/orders/status/:orderId
+5. Return orderId to client
    ↓
-6. Add order to BullMQ queue
+6. Client connects to WebSocket /api/orders/status/:orderId
    ↓
 7. Worker picks up order (status: ROUTING)
    ↓
@@ -237,7 +238,7 @@ order-execution-engine/
    ↓
 10. Compare prices → Select best DEX
     ↓
-11. Send routing update via WebSocket
+11. Send routing update via WebSocket (to all connected clients for this order)
     ↓
 12. Change status to BUILDING
     ↓
@@ -251,18 +252,24 @@ order-execution-engine/
     ↓
 17. Change status to CONFIRMED
     ↓
-18. Send final update via WebSocket
+18. Send final update via WebSocket (to all connected clients)
     ↓
 19. Close WebSocket connection (after 2s delay)
 ```
+
+**Key Architectural Decision:**
+- Orders are queued **immediately** upon creation (step 4), not when WebSocket connects
+- This ensures processing starts right away, even if client hasn't connected to WebSocket yet
+- WebSocket connections receive all updates for their order, regardless of when they connect
+- Multiple WebSocket clients can connect to the same order and all receive updates
 
 ---
 
 ## 🧪 Test Coverage
 
-### Unit Tests (12 tests)
+### Unit Tests (40 tests)
 
-**MockDexRouter.test.ts:**
+**MockDexRouter.test.ts (10 tests):**
 - ✅ Raydium quote fetching
 - ✅ Meteora quote fetching
 - ✅ Network delay simulation
@@ -274,7 +281,7 @@ order-execution-engine/
 - ✅ Slippage protection
 - ✅ Complete routing flow
 
-**validation.test.ts:**
+**validation.test.ts (8 tests):**
 - ✅ Valid order request
 - ✅ Custom order type
 - ✅ Negative amount rejection
@@ -283,6 +290,23 @@ order-execution-engine/
 - ✅ Empty token rejection
 - ✅ Missing fields rejection
 - ✅ Edge case handling
+
+**WebSocketManager.test.ts (22 tests):**
+- ✅ Connection registration
+- ✅ Buffered update delivery on connect
+- ✅ Connection close handling
+- ✅ Connection error handling
+- ✅ Real-time update sending
+- ✅ Redis buffering when no connection
+- ✅ Buffering when connection closed
+- ✅ Multiple update buffering
+- ✅ Send error handling with fallback
+- ✅ Connection close cleanup
+- ✅ Active connection counting
+- ✅ Close all connections
+- ✅ Redis TTL on buffered updates
+- ✅ Buffer clearing after delivery
+- ✅ Complete lifecycle integration test
 
 ---
 
@@ -321,10 +345,10 @@ order-execution-engine/
 - API documentation with examples
 
 ✅ **Testing**
-- 20+ comprehensive tests
-- Unit tests for core logic
-- Integration test scenarios
-- Jest configuration
+- 40 comprehensive tests
+- Unit tests for core logic (MockDexRouter, validation)
+- Integration tests for WebSocket buffering
+- Jest configuration with proper cleanup
 
 ✅ **API Collection**
 - Postman collection with 9 requests
@@ -374,6 +398,8 @@ order-execution-engine/
 - **Efficiency**: No polling overhead
 - **UX**: Better user experience
 - **Scalable**: Connection per order
+- **Asynchronous**: Orders process immediately, WebSocket connection is optional
+- **Multi-client**: Multiple WebSocket connections can monitor the same order
 
 ---
 
@@ -455,7 +481,7 @@ Total: ~2.7 seconds
 - Error handling and retries
 
 ✅ **Quality**
-- 20+ passing tests
+- 40 passing tests (100% pass rate)
 - TypeScript strict mode
 - Clean code organization
 - Comprehensive error handling

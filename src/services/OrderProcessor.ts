@@ -54,7 +54,7 @@ export class OrderProcessor {
       await this.orderRepository.save(order);
 
       // Send routing update with quotes
-      this.sendStatusUpdate(order.id, {
+      await this.sendStatusUpdate(order.id, {
         orderId: order.id,
         status: OrderStatus.ROUTING,
         message: "DEX routing completed",
@@ -86,7 +86,7 @@ export class OrderProcessor {
       order.executionPrice = swapResult.executedPrice;
       await this.orderRepository.save(order);
 
-      this.sendStatusUpdate(order.id, {
+      await this.sendStatusUpdate(order.id, {
         orderId: order.id,
         status: OrderStatus.CONFIRMED,
         message: "Transaction confirmed successfully",
@@ -111,7 +111,7 @@ export class OrderProcessor {
       await this.orderRepository.save(order);
 
       // Send failure update
-      this.sendStatusUpdate(order.id, {
+      await this.sendStatusUpdate(order.id, {
         orderId: order.id,
         status: OrderStatus.FAILED,
         message: "Order execution failed",
@@ -135,7 +135,7 @@ export class OrderProcessor {
     order.status = status;
     await this.orderRepository.save(order);
 
-    this.sendStatusUpdate(order.id, {
+    await this.sendStatusUpdate(order.id, {
       orderId: order.id,
       status,
       message
@@ -143,10 +143,10 @@ export class OrderProcessor {
   }
 
   /**
-   * Send status update via WebSocket
+   * Send status update via WebSocket (or buffer in Redis if not connected)
    */
-  private sendStatusUpdate(orderId: string, update: OrderStatusUpdate): void {
-    wsManager.sendStatusUpdate(orderId, update);
+  private async sendStatusUpdate(orderId: string, update: OrderStatusUpdate): Promise<void> {
+    await wsManager.sendStatusUpdate(orderId, update);
   }
 
   /**
