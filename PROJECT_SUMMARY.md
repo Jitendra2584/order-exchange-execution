@@ -535,13 +535,7 @@ Total: ~2.7 seconds
    pnpm test
    ```
 
-3. **Deploy to Railway/Render**
-   - Follow DEPLOYMENT.md guide
-   - Add PostgreSQL and Redis
-   - Configure environment variables
-   - Deploy and test
-
-4. **Create Demo Video**
+3. **Create Demo Video**
    - Show WebSocket client
    - Submit 3-5 orders simultaneously
    - Demonstrate status updates
