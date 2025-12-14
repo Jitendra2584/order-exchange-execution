@@ -3,6 +3,10 @@ https://domestic-brittney-individual-test-123-ea51a9a8.koyeb.app
 # DEMO URL - 
 https://domestic-brittney-individual-test-123-ea51a9a8.koyeb.app/test.html
 
+## postmen API collection - 
+### inside current directory - [postman_collection.json](postman_collection.json)
+
+
 ## One Request one connection
 As per the requirements, each 'create order' request needs its own dedicated socket connection (one connection per request). I was initially confused about this, so I implemented it as i can understand.
 
