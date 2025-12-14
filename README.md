@@ -1,3 +1,6 @@
+## One Request one connection
+As per the requirements, each 'create order' request needs its own dedicated socket connection (one connection per request). I was initially confused about this, so I implemented it as i can understand.
+
 # Order Execution Engine
 
 A high-performance order execution engine for cryptocurrency trading with intelligent DEX routing, real-time WebSocket updates, and concurrent order processing.
